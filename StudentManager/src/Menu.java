@@ -1,0 +1,3 @@
+enum Menu {
+	ADD, NUMBER, RANK, SEARCH, QUIT	
+}
