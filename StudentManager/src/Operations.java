@@ -1,25 +1,31 @@
 import java.util.*;
 import java.io.*;
 
-public class Operations{
+public class Operations {
 	enum Menu {
 		ADD, NUMBER, RANK, SEARCH, QUIT
 	}
 	
-
 	private ArrayList<StudentInfo> student = new ArrayList<StudentInfo>();
-	private Scanner sc = new Scanner(System.in);
-	
+	private String fileName = "Resource/StudentInfo.txt";
+	private String dirName = "Resource";
+	private File file;
+
 	// 파일 저장
 	public void saveFile() {
 		FileWriter fw = null;
+		file = new File(dirName);
+		if(!file.exists()) {
+			boolean isSuccess = file.mkdir();
+			if(isSuccess) {
+				System.out.println("디렉토리 생성완료");
+			}
+		}
 		
 		try {
-			fw = new FileWriter("Resource/StudentInfo.txt");
+			fw = new FileWriter(fileName);
 			
 			for(StudentInfo std: student) {
-				
-				//System.out.printf("번호\t이름\t국어\t영어\t수학\t총점\t평균\t순위%n");
 				String data = std.getNo() + ","
 							+ std.getName() + ","
 							+ std.getKorScore() + ","
@@ -29,29 +35,24 @@ public class Operations{
 							+ std.getAverage() + ","
 							+ std.getRank() + "\r\n";
 				
-				fw.write(data);
+				fw.write(data);		// 학생 한명씩 저장.
 			}
 			
 			System.out.println("저장완료");
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if(fw != null) fw.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		} 
 	}
 	
 	// 파일 불러오기
 	public void LoadFile() {
 		BufferedReader br = null;
-		
+
 		try {
-			br = new BufferedReader(new FileReader("Resource/StudentInfo.txt"));
+			br = new BufferedReader(new FileReader(fileName));
 			String data = null;
+
 			while ((data = br.readLine()) != null) {
 				String[] str = new String(data).split(",");
 				//student.add(new StudentInfo(name, korScore, engScore, mathScore));
@@ -63,20 +64,33 @@ public class Operations{
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			try {
-				if(br != null) br.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		} 
 	}
 	
 	// 메뉴선택
 	public void start() {
+		File dir = new File(dirName);
+		File file = new File(fileName);
 		
-		LoadFile();
-		
+		// 해당 파일 존재하지 않으면 파일 생성
+		if(!dir.exists() || !file.exists()) { 
+			boolean dirCreate = false;
+			boolean fileCreate = false;
+			try	{
+				dirCreate = dir.mkdirs();
+				fileCreate = file.createNewFile();
+			} catch (Exception e)	{
+				e.printStackTrace();
+			}
+			
+			if(dirCreate && fileCreate ) {		
+				System.out.println("디렉토리 및 파일을 생성하였습니다.");		
+			}
+
+		} else { // 파일 불러오기
+			LoadFile();
+		}
+
 		while(true) {	// 5를 입력받기 전까지 계속 실행됨
 			System.out.println("1. 학생 성적 등록");
 			System.out.println("2. 번호별 전체 학생 성적 조회");
@@ -114,6 +128,7 @@ public class Operations{
 				case QUIT:
 					// 5. 종료
 					System.out.println("프로그램을 종료합니다.");
+					saveFile();
 					return ;
 				default:
 					break;
@@ -124,30 +139,33 @@ public class Operations{
 
 	// 숫자를 입력받는 메소드
 	public int inputNum(int minScope, int maxScope) {
-
+		BufferedReader br = null;
 		int num = 0;
+		br = new BufferedReader(new InputStreamReader(System.in));
 		while(true) {
 			try {
-				String input = sc.nextLine();
+				
+
+				String input = br.readLine();  //String input = sc.nextLine(); 울 readLine으로 대체
 				if(input.equals("")) {
-					return -1;
+					throw new WrongValueException("\n" + minScope + " ~ " + maxScope +"의 숫자를 입력하세요.");
 				} else if(input.charAt(0) >= '0' && input.charAt(0) <='9') {
 					num = Integer.parseInt(input);
 					if(num < minScope || num > maxScope) { 
 						throw new WrongValueException("\n" + minScope + " ~ " + maxScope +"의 숫자를 입력하세요.");
-
 					}
-					break;
+					break; // Scope안에 들어오면 break;
+
 				} else { // 공백, 숫자 범위 아웃
 					throw new WrongValueException("\n" + minScope + " ~ " + maxScope +"의 숫자를 입력하세요.\n");	
 				}
 	
 			}
-			catch (WrongValueException wve) {
-				System.out.println(wve.getMessage());
+			catch (Exception e) {//WrongValueException wve) {
+				System.out.println(e.getMessage());
 				System.out.print("다시 입력 : ");
-
-			} //try
+			} //try 
+			
 
 		} //while	
 		return num;
@@ -156,19 +174,22 @@ public class Operations{
 
 	// 문자를 입력받는 메소드
 	public String inputStr() {
+		BufferedReader br = null;
+
 		String str = "";
 		while(true) {
 			try {
-				str = sc.nextLine();	
+				br = new BufferedReader(new InputStreamReader(System.in)); //str = sc.nextLine();	
+
+				str = br.readLine();
 				if(str.equals("")) {	// 아무입력없이 엔터쳤을때
 					throw new WrongValueException("이름을 입력하세요: ");
 				} else {
 					break;	// 뭐라도 입력했으니 반환.
 				}
+			} catch (Exception e) {
+				System.out.print(e.getMessage());
 			}
-			catch (WrongValueException wve) {
-				System.out.print(wve.getMessage());
-			}	
 			
 		} // while	
 		return str; 
@@ -262,7 +283,16 @@ public class Operations{
 		}
 
 		// 원래 배열을 복제해서 선택정렬한 뒤 복제한 배열 출력
-		ArrayList<StudentInfo> rankSortedArray = (ArrayList<StudentInfo>)student.clone();		// 우리가 1부터 쓰기때문에 오류가 남. 0부터 해야됨...
+		ArrayList<StudentInfo> rankSortedArray = new ArrayList<StudentInfo>();
+		//(ArrayList<StudentInfo>)student.clone();
+
+		for(int i = 0; i < student.size(); i++) {
+			try {
+				rankSortedArray.add(student.get(i).clone());//.clone();
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
 		
 		// 순차정렬
 		sortArray(rankSortedArray);
@@ -272,6 +302,7 @@ public class Operations{
 		for(int i = 0 ;i < student.size(); i++) {
 			System.out.println(rankSortedArray.get(i).printScore());
 		}
+
 	} // rankSortedView()
 
 

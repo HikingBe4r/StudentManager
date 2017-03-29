@@ -7,6 +7,6 @@ public class SGMS {
 		Operations op = new Operations();
 		op.start();
 
-   } // main()1
+   } // main()
 
 } // SGMS class	

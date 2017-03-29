@@ -74,6 +74,9 @@ public class StudentInfo implements Cloneable{
 	public void setRank(int rank) {
 		this.rank = rank;
 	}
+	public void setTotal(int total) {
+		this.total = total;
+	}
 
 	protected StudentInfo clone() throws CloneNotSupportedException {
 		return (StudentInfo)super.clone();
